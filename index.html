@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Terminal — AI Workspace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background gradient blobs -->
+    <div class="bg-gradient-blob blob-1"></div>
+    <div class="bg-gradient-blob blob-2"></div>
+    <div class="bg-gradient-blob blob-3"></div>
+
+    <!-- LANDING PAGE -->
+    <div id="landingView" class="landing-container">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="nav-container">
+                <a href="#" class="nav-logo">
+                    <span class="logo-text">Agent Terminal</span>
+                </a>
+                <div class="nav-links">
+                    <a href="#features" class="nav-link">Features</a>
+                    <a href="#models" class="nav-link">Models</a>
+                    <a href="#cta" class="nav-link">Pricing</a>
+                </div>
+                <div class="nav-actions">
+                    <button id="openSettingsBtn" class="btn btn-ghost">Settings</button>
+                    <button id="launchBtn" class="btn btn-primary btn-sm">Launch App</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-container">
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        <span class="dot"></span>
+                        <span>v3.0 Now Live</span>
+                    </div>
+                    <h1 class="hero-title">
+                        Your AI workspace for<br>
+                        <span class="gradient-text">autonomous agents</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        Deploy, chat, and automate with any AI model. OpenAI, Claude, Gemini, and more — all in one beautifully designed terminal.
+                    </p>
+                    <div class="hero-buttons">
+                        <button id="launchBtn2" class="btn btn-primary btn-large">Launch Terminal</button>
+                        <a href="#features" class="btn btn-outline btn-large">Learn More</a>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="device-mockup">
+                        <div class="device-screen">
+                            <div class="device-screen-header">
+                                <h4>Agent Terminal</h4>
+                                <p>Ready to assist</p>
+                            </div>
+                            <div class="device-screen-body">
+                                <div class="device-msg device-msg-ai">Hey! I'm your AI agent. What can I help you with today?</div>
+                                <div class="device-msg device-msg-user">Help me write a Python script to analyze sales data</div>
+                                <div class="device-msg device-msg-ai">Sure! Here's a script using pandas to analyze your sales data...</div>
+                                <div class="device-msg device-msg-ai" style="font-family:var(--font-mono);font-size:0.65rem">import pandas as pd&#10;&#10;df = pd.read_csv('sales.csv')&#10;print(df.groupby('month').sum())</div>
+                            </div>
+                            <div class="device-input">
+                                <div class="device-input-bar">
+                                    <div class="device-input-dot"></div>
+                                    <div class="device-input-line"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Floating cards -->
+                    <div class="float-card float-card-1">
+                        <div class="float-card-icon purple">⚡</div>
+                        <div class="float-card-title">Fast Setup</div>
+                        <div class="float-card-desc">Deploy in seconds</div>
+                    </div>
+                    <div class="float-card float-card-2">
+                        <div class="float-card-icon pink">🤖</div>
+                        <div class="float-card-title">Multi-Model</div>
+                        <div class="float-card-desc">GPT, Claude, Gemini</div>
+                    </div>
+                    <div class="float-card float-card-3">
+                        <div class="float-card-icon green">🔒</div>
+                        <div class="float-card-title">Secure</div>
+                        <div class="float-card-desc">Local key storage</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features" id="features">
+            <div class="section-header">
+                <div class="section-label">✨ Core Features</div>
+                <h2 class="section-title">Everything you need</h2>
+                <p class="section-desc">A complete AI workspace designed for developers, researchers, and power users who demand control.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3 class="feature-title">AI Agents</h3>
+                    <p class="feature-desc">Deploy autonomous agents in seconds with custom system prompts and model selection.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">Fast Execution</h3>
+                    <p class="feature-desc">Optimized for speed with streaming responses and parallel workflow support.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3 class="feature-title">Secure by Design</h3>
+                    <p class="feature-desc">API keys stored locally in your browser. Encrypted, isolated, and password-protected.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3 class="feature-title">Multi-Model</h3>
+                    <p class="feature-desc">Connect OpenAI, Claude, Gemini, Grok, Llama — switch between models instantly.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🖼</div>
+                    <h3 class="feature-title">Image Generation</h3>
+                    <p class="feature-desc">DALL-E and compatible image models with multiple sizes and quality options.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <h3 class="feature-title">Export & Share</h3>
+                    <p class="feature-desc">Export conversations as JSON, copy messages, and download generated images.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Models Section -->
+        <section class="models-section" id="models">
+            <div class="models-container">
+                <div class="section-header">
+                    <div class="section-label">🧩 Connected Models</div>
+                    <h2 class="section-title">Your favorite AI models</h2>
+                    <p class="section-desc">Connect any OpenAI-compatible API endpoint and switch between models with a single click.</p>
+                </div>
+                <div class="models-grid">
+                    <div class="model-card">
+                        <div class="model-avatar openai">O</div>
+                        <div class="model-info">
+                            <h4>GPT-4o</h4>
+                            <p>OpenAI</p>
+                        </div>
+                    </div>
+                    <div class="model-card">
+                        <div class="model-avatar anthropic">A</div>
+                        <div class="model-info">
+                            <h4>Claude 3.5</h4>
+                            <p>Anthropic</p>
+                        </div>
+                    </div>
+                    <div class="model-card">
+                        <div class="model-avatar google">G</div>
+                        <div class="model-info">
+                            <h4>Gemini Pro</h4>
+                            <p>Google</p>
+                        </div>
+                    </div>
+                    <div class="model-card">
+                        <div class="model-avatar meta">M</div>
+                        <div class="model-info">
+                            <h4>Llama 3.1</h4>
+                            <p>Meta</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section" id="cta">
+            <div class="cta-card">
+                <h2 class="cta-title">Ready to get started?</h2>
+                <p class="cta-desc">Launch your AI workspace in seconds. No sign-up required — just bring your API key.</p>
+                <div class="cta-buttons">
+                    <button id="launchBtn3" class="btn btn-primary btn-large">Launch Terminal</button>
+                    <a href="#features" class="btn btn-outline btn-large">Explore Features</a>
+                </div>
+                <div class="cta-chips">
+                    <span class="chip">⚡ Instant Setup</span>
+                    <span class="chip">🔑 BYOK</span>
+                    <span class="chip">🛡️ Local Storage</span>
+                    <span class="chip">🌙 Dark Mode</span>
+                    <span class="chip">📥 Export Data</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-container">
+                <div class="footer-grid">
+                    <div class="footer-brand">
+                        <div class="nav-logo">
+                            <span class="logo-text" style="color:white">Agent Terminal</span>
+                        </div>
+                        <p style="margin-top:16px">The fastest AI workspace for autonomous agents. Pure HTML/CSS/JS — zero dependencies.</p>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Product</h4>
+                        <a href="#">Features</a>
+                        <a href="#">Models</a>
+                        <a href="#">Pricing</a>
+                        <a href="#">Changelog</a>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Resources</h4>
+                        <a href="#">Documentation</a>
+                        <a href="#">API Reference</a>
+                        <a href="#">Status</a>
+                        <a href="#">GitHub</a>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Company</h4>
+                        <a href="#">About</a>
+                        <a href="#">Blog</a>
+                        <a href="#">Contact</a>
+                        <a href="#">Careers</a>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    © 2025 Agent Terminal. MIT License. Build boldly.
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- APP VIEW -->
+    <div id="appView" class="app-container">
+        <!-- Sidebar -->
+        <aside class="app-sidebar">
+            <div class="app-sidebar-header">
+                <span class="logo-text">Agent Terminal</span>
+            </div>
+            <button id="newChatBtn" class="btn btn-primary btn-sm app-new-chat">+ New Chat</button>
+            <div class="app-history-section">
+                <div class="app-history-label">
+                    <span>History</span>
+                    <button id="clearHistoryBtn" class="app-toolbar-btn" style="font-size:0.65rem">Clear All</button>
+                </div>
+                <div id="historyList" class="app-history-list"></div>
+            </div>
+            <div class="app-sidebar-footer">
+                <button id="homeBtn" class="btn btn-ghost btn-sm" style="justify-content:flex-start">← Back to Home</button>
+                <div class="app-status">
+                    <span class="app-status-dot" id="statusDot"></span>
+                    <span id="statusText">Offline</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Area -->
+        <main class="app-main">
+            <!-- Chat View -->
+            <div id="chatView" class="view active" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+                <div class="app-toolbar">
+                    <span class="app-toolbar-title" id="chatToolbarTitle">New Chat</span>
+                    <div class="app-toolbar-actions">
+                        <button id="reasoningModeBtn" class="app-toolbar-btn" title="Toggle deep reasoning mode">🧠 Reasoning</button>
+                        <button id="debugToggleBtn" class="app-toolbar-btn" title="Toggle debug panel">🔍 Debug</button>
+                        <button id="copyChatBtn" class="app-toolbar-btn">Copy</button>
+                        <button id="exportChatBtn" class="app-toolbar-btn">Export</button>
+                        <button id="clearChatBtn" class="app-toolbar-btn">Clear</button>
+                    </div>
+                </div>
+                <div id="messagesContainer" class="app-messages">
+                    <div class="app-welcome" id="welcomeMessage">
+                        <div class="app-welcome-icon" style="font-family:var(--font-signature);font-size:1.8rem">Agent</div>
+                        <h2>Welcome to Agent Terminal</h2>
+                        <p>Your AI-powered workspace for coding, research, and automation.</p>
+                        <div class="app-welcome-features">
+                            <span>Chat with AI agents</span>
+                            <span>Generate images</span>
+                            <span>Research & automation</span>
+                            <span>Code with markdown</span>
+                            <span class="warning">Configure API in settings to begin</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Debug Panel -->
+                <div id="debugPanel" class="app-debug-panel" style="display:none">
+                    <div class="debug-header">
+                        <span>🔍 API Debug</span>
+                        <button id="debugCloseBtn" class="app-toolbar-btn">✕</button>
+                    </div>
+                    <div id="debugContent" class="debug-content">
+                        <div class="debug-placeholder">No requests yet. Send a message to see API debug info.</div>
+                    </div>
+                </div>
+                <div class="app-input-area">
+                    <div class="app-input-row">
+                        <select id="modelSelect" class="app-model-select">
+                            <option value="gpt-4o">GPT-4o</option>
+                            <option value="gpt-4o-mini">GPT-4o Mini</option>
+                            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                            <option value="claude-3-opus">Claude 3 Opus</option>
+                            <option value="claude-3-haiku">Claude 3 Haiku</option>
+                            <option value="gemini-pro">Gemini Pro</option>
+                            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                            <option value="llama-3.1-70b">Llama 3.1 70B</option>
+                            <option value="llama-3.1-8b">Llama 3.1 8B</option>
+                            <option value="mixtral-8x7b">Mixtral 8x7B</option>
+                        </select>
+                        <button id="imageModeBtn" class="app-toolbar-btn">🖼 Image</button>
+                    </div>
+                    <div class="app-input-wrapper">
+                        <textarea id="messageInput" class="app-input" placeholder="Type your message... (Shift+Enter for new line)" rows="1"></textarea>
+                        <button id="sendBtn" class="app-send-btn">→</button>
+                    </div>
+                    <div class="app-input-hint">Press Enter to send · Shift+Enter for new line</div>
+                </div>
+            </div>
+
+            <!-- Image View -->
+            <div id="imageView" class="app-image-view">
+                <div class="app-toolbar">
+                    <span class="app-toolbar-title">Image Generator</span>
+                    <div class="app-toolbar-actions">
+                        <button id="backToChatBtn" class="app-toolbar-btn">← Chat</button>
+                    </div>
+                </div>
+                <div class="app-image-prompt">
+                    <textarea id="imagePromptInput" placeholder="Describe the image you want to generate..."></textarea>
+                    <div class="app-image-options">
+                        <select id="imageSize">
+                            <option value="1024x1024">1024×1024 Square</option>
+                            <option value="1024x1792">1024×1792 Portrait</option>
+                            <option value="1792x1024">1792×1024 Landscape</option>
+                            <option value="512x512">512×512 Small</option>
+                        </select>
+                        <select id="imageQuality">
+                            <option value="standard">Standard</option>
+                            <option value="hd">HD</option>
+                        </select>
+                        <button id="generateImageBtn" class="btn btn-primary btn-sm">Generate</button>
+                    </div>
+                </div>
+                <div class="app-image-result" id="imageResult">
+                    <div class="app-image-placeholder">
+                        <div class="icon">🖼</div>
+                        <p>Your generated image will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>⚙ Settings</h3>
+                <button id="closeSettings" class="modal-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="apiUrl">API Base URL</label>
+                    <input type="text" id="apiUrl" class="form-input" placeholder="https://api.openai.com/v1">
+                    <p class="form-hint">OpenAI, Together AI, OpenRouter, Groq — any OpenAI-compatible endpoint</p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="apiKey">API Key</label>
+                    <input type="password" id="apiKey" class="form-input" placeholder="sk-...">
+                    <p class="form-hint">Stored locally in your browser — never sent to our servers</p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="chatModel">Chat Model</label>
+                    <input type="text" id="chatModel" class="form-input" placeholder="gpt-4o" value="gpt-4o">
+                    <p class="form-hint">For seekai.cc try: <code style="background:rgba(124,58,237,0.1);padding:2px 6px;border-radius:4px;font-size:0.75rem">claude-3-opus-20240229</code> or <code style="background:rgba(124,58,237,0.1);padding:2px 6px;border-radius:4px;font-size:0.75rem">gpt-4o</code></p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="imageModel">Image Model</label>
+                    <input type="text" id="imageModel" class="form-input" placeholder="dall-e-3" value="dall-e-3">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="systemPrompt">System Prompt</label>
+                    <textarea id="systemPrompt" class="form-input form-textarea" rows="3">You are a powerful AI agent capable of answering questions, generating ideas, creating solutions, and assisting with various tasks. Be concise, direct, and helpful. Format your responses using markdown when appropriate.</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="accessPassword">Access Password (optional)</label>
+                    <input type="password" id="accessPassword" class="form-input" placeholder="Leave empty to disable">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Temperature</label>
+                    <div class="form-range-wrap">
+                        <input type="range" id="temperature" class="form-range" min="0" max="2" step="0.1" value="0.7">
+                        <span id="tempValue" class="form-range-value">0.7</span>
+                    </div>
+                    <p class="form-hint">0 = focused · 1 = balanced · 2 = creative</p>
+                </div>
+                <div class="form-actions">
+                    <button id="saveSettings" class="btn btn-primary btn-block">Save Settings</button>
+                    <button id="testConnection" class="btn btn-outline btn-block">Test Connection</button>
+                    <button id="testModelBtn" class="btn btn-ghost btn-sm" style="margin-top:4px;font-size:0.75rem">🧪 Test Current Model</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
