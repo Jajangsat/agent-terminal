@@ -132,6 +132,12 @@
         dom.backToChatBtn.addEventListener('click', () => switchView('chatView'));
         dom.generateImageBtn.addEventListener('click', generateImage);
 
+        // Search & Answer button
+        dom.searchAnswerBtn = document.getElementById('searchAnswerBtn');
+        if (dom.searchAnswerBtn) {
+            dom.searchAnswerBtn.addEventListener('click', searchAndAnswer);
+        }
+
         // Model select sync
         dom.modelSelect.addEventListener('change', () => {
             state.settings.chatModel = dom.modelSelect.value;
@@ -376,6 +382,97 @@
         }
     }
 
+    async function searchAndAnswer() {
+        const content = dom.messageInput.value.trim();
+        if (!content || state.isLoading) return;
+
+        if (!state.settings.apiUrl || !state.settings.apiKey) {
+            alert('Please configure API settings first');
+            openSettings();
+            return;
+        }
+
+        ensureSession();
+        const session = state.sessions[state.currentSessionId];
+        if (!session) return;
+
+        if (dom.welcomeMessage) dom.welcomeMessage.style.display = 'none';
+
+        // Show search indicator
+        const searchDiv = document.createElement('div');
+        searchDiv.className = 'typing-indicator';
+        searchDiv.id = 'searchIndicator';
+        searchDiv.style.maxWidth = '250px';
+        searchDiv.innerHTML = `<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div><div style="font-size:0.7rem;color:var(--primary);margin-top:4px;font-family:var(--font)">Searching web for: ${escapeHtml(content)}...</div>`;
+        dom.messagesContainer.appendChild(searchDiv);
+        scrollToBottom();
+
+        // Perform search
+        let searchContext = '';
+        try {
+            const results = await performWebSearch(content);
+            searchContext = formatSearchResults(results);
+        } catch (error) {
+            searchContext = 'Web search unavailable. Answering from training data.';
+        }
+
+        removeTypingIndicator();
+
+        // Combine user message with search results
+        const enhancedMessage = `I need to answer this question with the most current information available.\n\nQuestion: ${content}\n\nHere are the latest search results from the web:\n\n${searchContext}\n\nPlease analyze the search results above and provide a comprehensive, accurate answer based on this current information. Cite your sources when possible.`;
+
+        session.messages.push({ role: 'user', content: enhancedMessage, timestamp: Date.now() });
+        session.updatedAt = Date.now();
+        if (session.messages.length === 1) {
+            session.title = content.substring(0, 40) + (content.length > 40 ? '...' : '');
+        }
+
+        dom.messageInput.value = '';
+        autoResize();
+        renderMessages();
+        saveSessions();
+        renderHistory();
+
+        // Now send normally
+        state.isLoading = true;
+        updateSendButton();
+
+        try {
+            const currentModel = dom.modelSelect.value;
+            const systemPrompt = getSystemPrompt();
+            const messages = [
+                { role: 'system', content: systemPrompt },
+                ...session.messages.map(m => ({ role: m.role, content: m.content }))
+            ];
+
+            const requestBody = {
+                model: currentModel,
+                messages,
+                temperature: state.reasoningMode ? 0.3 : parseFloat(state.settings.temperature)
+            };
+
+            const response = await callApi('chat/completions', requestBody);
+            const assistantContent = response.choices[0].message.content;
+
+            session.messages.push({
+                role: 'assistant',
+                content: assistantContent,
+                timestamp: Date.now()
+            });
+        } catch (error) {
+            session.messages.push({
+                role: 'assistant',
+                content: '[ERROR] ' + error.message,
+                timestamp: Date.now()
+            });
+        }
+
+        state.isLoading = false;
+        updateSendButton();
+        renderMessages();
+        saveSessions();
+    }
+
     function getSystemPrompt() {
         const today = new Date();
         const dateStr = today.toLocaleDateString('id-ID', {
@@ -387,9 +484,6 @@
 
         const dateContext = `\n\nCurrent date: ${dateStr}. Always reference the current date when answering time-sensitive questions.`;
 
-        const searchContext = state.webSearchEnabled ?
-            `\n\nYou have access to a web search tool called "web_search". When the user asks about recent events, current news, or anything that may have changed after your knowledge cutoff, use the web_search tool to find current information. Always search when asked about anything time-sensitive or recent.` : '';
-
         let basePrompt;
         if (state.reasoningMode) {
             basePrompt = 'You are an expert AI analyst with deep reasoning capabilities. When answering questions:\n\n1. Think step by step and explain your reasoning process\n2. Consider multiple perspectives before concluding\n3. Acknowledge uncertainty when appropriate\n4. Provide evidence-based conclusions\n5. Use structured analysis for complex problems\n6. Break down complex topics into understandable parts\n\nBe thorough, precise, and intellectually honest. Format your responses using markdown when appropriate.';
@@ -397,23 +491,7 @@
             basePrompt = state.settings.systemPrompt;
         }
 
-        return basePrompt + dateContext + searchContext;
-    }
-
-    function showSearchIndicator(query) {
-        const indicator = document.createElement('div');
-        indicator.className = 'typing-indicator';
-        indicator.id = 'searchIndicator';
-        indicator.innerHTML = `<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>`;
-        indicator.style.maxWidth = '200px';
-
-        const searchLabel = document.createElement('div');
-        searchLabel.style.cssText = 'font-size:0.7rem;color:var(--primary);margin-top:4px;font-family:var(--font)';
-        searchLabel.textContent = `Searching: ${query}...`;
-        indicator.appendChild(searchLabel);
-
-        dom.messagesContainer.appendChild(indicator);
-        scrollToBottom();
+        return basePrompt + dateContext;
     }
 
     // ========== DEBUG LOG ==========
@@ -451,24 +529,6 @@
     }
 
     // ========== WEB SEARCH TOOL ==========
-    const WEB_SEARCH_TOOLS = [{
-        type: 'function',
-        function: {
-            name: 'web_search',
-            description: 'Search the web for current information about recent events, news, facts, or data. Use this when the user asks about something that happened after 2024 or when you need real-time information.',
-            parameters: {
-                type: 'object',
-                properties: {
-                    query: {
-                        type: 'string',
-                        description: 'The search query'
-                    }
-                },
-                required: ['query']
-            }
-        }
-    }];
-
     async function performWebSearch(query) {
         try {
             const encodedQuery = encodeURIComponent(query);
@@ -624,14 +684,10 @@
                 ...session.messages.map(m => ({ role: m.role, content: m.content }))
             ];
 
-            // Add tools if web search is enabled
-            const tools = state.webSearchEnabled ? WEB_SEARCH_TOOLS : undefined;
-
             const requestBody = {
                 model: currentModel,
                 messages,
-                temperature: state.reasoningMode ? 0.3 : parseFloat(state.settings.temperature),
-                ...(tools ? { tools, tool_choice: 'auto' } : {})
+                temperature: state.reasoningMode ? 0.3 : parseFloat(state.settings.temperature)
             };
 
             // Log debug info
@@ -640,71 +696,14 @@
                     url: state.settings.apiUrl.replace(/\/+$/, '') + '/chat/completions',
                     model: currentModel,
                     temperature: requestBody.temperature,
-                    tools: state.webSearchEnabled ? 'web_search enabled' : 'none',
                     systemPrompt: systemPrompt.substring(0, 200) + '...',
                     messageCount: messages.length
                 });
             }
 
-            let response = await callApi('chat/completions', requestBody);
-            let assistantMessage = response.choices[0].message;
+            const response = await callApi('chat/completions', requestBody);
 
-            // Handle tool calls (web search)
-            if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
-                if (state.debugMode) {
-                    addDebugLog('TOOL_CALL', {
-                        tools: JSON.stringify(assistantMessage.tool_calls)
-                    });
-                }
-
-                // Add assistant's tool call to messages
-                messages.push({
-                    role: 'assistant',
-                    content: assistantMessage.content,
-                    tool_calls: assistantMessage.tool_calls
-                });
-
-                // Execute each tool call
-                for (const toolCall of assistantMessage.tool_calls) {
-                    if (toolCall.function.name === 'web_search') {
-                        const searchQuery = JSON.parse(toolCall.function.arguments).query;
-
-                        if (state.debugMode) {
-                            addDebugLog('SEARCH', { query: searchQuery });
-                        }
-
-                        // Show search indicator
-                        showSearchIndicator(searchQuery);
-
-                        const searchResults = await performWebSearch(searchQuery);
-                        const formattedResults = formatSearchResults(searchResults);
-
-                        // Add tool result to messages
-                        messages.push({
-                            role: 'tool',
-                            tool_call_id: toolCall.id,
-                            content: formattedResults
-                        });
-
-                        removeTypingIndicator();
-                    }
-                }
-
-                // Show typing indicator again for final response
-                showTypingIndicator();
-
-                // Get final response from model with search results
-                const finalRequestBody = {
-                    model: currentModel,
-                    messages,
-                    temperature: state.reasoningMode ? 0.3 : parseFloat(state.settings.temperature)
-                };
-
-                response = await callApi('chat/completions', finalRequestBody);
-                assistantMessage = response.choices[0].message;
-            }
-
-            const assistantContent = assistantMessage.content;
+            const assistantContent = response.choices[0].message.content;
 
             // Log response debug
             if (state.debugMode) {
