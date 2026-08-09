@@ -183,6 +183,16 @@
             });
         }
 
+        // Refresh models button
+        dom.refreshModelsBtn = document.getElementById('refreshModelsBtn');
+        if (dom.refreshModelsBtn) {
+            dom.refreshModelsBtn.addEventListener('click', () => {
+                fetchModels();
+                dom.refreshModelsBtn.textContent = 'Refreshing...';
+                setTimeout(() => { dom.refreshModelsBtn.textContent = 'Refresh Models'; }, 2000);
+            });
+        }
+
         // Debug panel toggle
         dom.debugToggleBtn = document.getElementById('debugToggleBtn');
         dom.debugPanel = document.getElementById('debugPanel');
@@ -790,14 +800,20 @@
                 }
             });
 
+            console.log('Models response status:', response.status);
+
             if (!response.ok) {
-                console.warn('Failed to fetch models:', response.status);
+                const errText = await response.text().catch(() => '');
+                console.warn('Failed to fetch models:', response.status, errText);
                 if (select) { select.style.opacity = '1'; select.disabled = false; }
                 return;
             }
 
             const data = await response.json();
+            console.log('Models response:', data);
+
             const models = data.data || [];
+            console.log('Raw models count:', models.length);
 
             // Filter chat-compatible models
             const chatModels = models.filter(m => {
@@ -805,12 +821,16 @@
                 if (id.includes('embedding') || id.includes('image') ||
                     id.includes('whisper') || id.includes('tts') ||
                     id.includes('moderation') || id.includes('davinci-similarity') ||
-                    id.includes('cinnamon')) return false;
+                    id.includes('cinnamon') || id.includes('code-') ||
+                    id.includes('dall-e') || id.includes('tts')) return false;
                 return true;
             }).map(m => m.id);
 
-            // Add common defaults if none found
+            console.log('Filtered chat models:', chatModels.length);
+
+            // Add common defaults if none found or if list is very small
             if (chatModels.length === 0) {
+                console.log('No models found, using defaults');
                 const defaults = ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo',
                     'claude-3-5-sonnet', 'claude-3-opus', 'claude-3-haiku',
                     'gemini-pro', 'gemini-1.5-pro', 'llama-3.1-70b', 'llama-3.1-8b', 'mixtral-8x7b'];
@@ -818,6 +838,7 @@
             }
 
             state.availableModels = chatModels.slice(0, 50);
+            console.log('Final models:', state.availableModels);
             populateModelSelect();
 
         } catch (error) {
