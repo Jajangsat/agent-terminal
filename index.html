@@ -287,6 +287,7 @@
                 <div class="app-toolbar">
                     <span class="app-toolbar-title" id="chatToolbarTitle">New Chat</span>
                     <div class="app-toolbar-actions">
+                        <button id="searchToggleBtn" class="app-toolbar-btn" title="Web Search">Search</button>
                         <button id="reasoningModeBtn" class="app-toolbar-btn" title="Toggle deep reasoning mode">Reasoning</button>
                         <button id="debugToggleBtn" class="app-toolbar-btn" title="Toggle debug panel">Debug</button>
                         <button id="copyChatBtn" class="app-toolbar-btn">Copy</button>
@@ -316,6 +317,22 @@
                     </div>
                     <div id="debugContent" class="debug-content">
                         <div class="debug-placeholder">No requests yet. Send a message to see API debug info.</div>
+                    </div>
+                </div>
+                <!-- Search Panel -->
+                <div id="searchPanel" class="app-search-panel" style="display:none">
+                    <div class="search-header">
+                        <span>Web Search</span>
+                        <button id="searchCloseBtn" class="app-toolbar-btn">✕</button>
+                    </div>
+                    <div class="search-body">
+                        <div class="search-input-row">
+                            <input type="text" id="searchQueryInput" class="search-input" placeholder="Search the web..." />
+                            <button id="searchExecuteBtn" class="btn btn-primary btn-sm">Search</button>
+                        </div>
+                        <div id="searchResults" class="search-results">
+                            <div class="search-placeholder">Enter a query to search the web. Results will appear here and can be sent to chat.</div>
+                        </div>
                     </div>
                 </div>
                 <div class="app-input-area">

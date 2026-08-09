@@ -3,7 +3,7 @@
 (function() {
     'use strict';
 
-    // ========== STATE ==========
+// ========== STATE ==========
     const state = {
         sessions: {},
         currentSessionId: null,
@@ -14,13 +14,15 @@
             imageModel: 'dall-e-3',
             systemPrompt: 'You are a powerful AI agent capable of answering questions, generating ideas, creating solutions, and assisting with various tasks. Be concise, direct, and helpful. Format your responses using markdown when appropriate.',
             temperature: 0.7,
-            accessPassword: ''
+            accessPassword: '',
+            searchApiKey: ''
         },
         isLoading: false,
         darkMode: false,
         availableModels: [],
         reasoningMode: false,
-        debugMode: false
+        debugMode: false,
+        webSearchEnabled: false
     };
 
     // ========== DOM ==========
@@ -140,6 +142,39 @@
         dom.reasoningModeBtn = document.getElementById('reasoningModeBtn');
         if (dom.reasoningModeBtn) {
             dom.reasoningModeBtn.addEventListener('click', toggleReasoningMode);
+        }
+
+        // Web search toggle
+        dom.searchToggleBtn = document.getElementById('searchToggleBtn');
+        dom.searchPanel = document.getElementById('searchPanel');
+        dom.searchCloseBtn = document.getElementById('searchCloseBtn');
+        dom.searchQueryInput = document.getElementById('searchQueryInput');
+        dom.searchExecuteBtn = document.getElementById('searchExecuteBtn');
+        dom.searchResults = document.getElementById('searchResults');
+
+        if (dom.searchToggleBtn) {
+            dom.searchToggleBtn.addEventListener('click', () => {
+                state.webSearchEnabled = !state.webSearchEnabled;
+                dom.searchPanel.style.display = state.webSearchEnabled ? 'flex' : 'none';
+                dom.searchToggleBtn.classList.toggle('reasoning-active', state.webSearchEnabled);
+                dom.searchToggleBtn.textContent = state.webSearchEnabled ? 'Search ON' : 'Search';
+            });
+        }
+        if (dom.searchCloseBtn) {
+            dom.searchCloseBtn.addEventListener('click', () => {
+                state.webSearchEnabled = false;
+                dom.searchPanel.style.display = 'none';
+                dom.searchToggleBtn.classList.remove('reasoning-active');
+                dom.searchToggleBtn.textContent = 'Search';
+            });
+        }
+        if (dom.searchExecuteBtn) {
+            dom.searchExecuteBtn.addEventListener('click', executeManualSearch);
+        }
+        if (dom.searchQueryInput) {
+            dom.searchQueryInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') executeManualSearch();
+            });
         }
 
         // Debug panel toggle
@@ -302,7 +337,42 @@
         const btn = dom.reasoningModeBtn;
         if (btn) {
             btn.classList.toggle('reasoning-active', state.reasoningMode);
-            btn.textContent = state.reasoningMode ? '🧠 Reasoning ON' : '🧠 Reasoning';
+            btn.textContent = state.reasoningMode ? 'Reasoning ON' : 'Reasoning';
+        }
+    }
+
+    async function executeManualSearch() {
+        const query = dom.searchQueryInput.value.trim();
+        if (!query) return;
+
+        dom.searchResults.innerHTML = '<div class="search-placeholder">Searching...</div>';
+
+        try {
+            const results = await performWebSearch(query);
+            const formatted = formatSearchResults(results);
+
+            dom.searchResults.innerHTML = results.map((r, i) => `
+                <div class="search-result-item">
+                    <div class="search-result-title">${escapeHtml(r.title)}</div>
+                    <div class="search-result-snippet">${escapeHtml(r.snippet)}</div>
+                    <a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" class="search-result-url">${escapeHtml(r.url)}</a>
+                    <button class="search-send-btn" data-results='${escapeAttr(JSON.stringify(results))}' data-index="${i}">Send to Chat</button>
+                </div>
+            `).join('');
+
+            // Add send to chat buttons
+            dom.searchResults.querySelectorAll('.search-send-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const results = JSON.parse(btn.dataset.results);
+                    const selected = results[parseInt(btn.dataset.index)];
+                    const text = `Here are search results for "${query}":\n\n${formatSearchResults([selected])}\n\nPlease analyze this information and answer my question.`;
+                    dom.messageInput.value = text;
+                    autoResize();
+                    sendMessage();
+                });
+            });
+        } catch (error) {
+            dom.searchResults.innerHTML = `<div class="search-placeholder" style="color:var(--error)">Search failed: ${escapeHtml(error.message)}</div>`;
         }
     }
 
@@ -317,6 +387,9 @@
 
         const dateContext = `\n\nCurrent date: ${dateStr}. Always reference the current date when answering time-sensitive questions.`;
 
+        const searchContext = state.webSearchEnabled ?
+            `\n\nYou have access to a web search tool called "web_search". When the user asks about recent events, current news, or anything that may have changed after your knowledge cutoff, use the web_search tool to find current information. Always search when asked about anything time-sensitive or recent.` : '';
+
         let basePrompt;
         if (state.reasoningMode) {
             basePrompt = 'You are an expert AI analyst with deep reasoning capabilities. When answering questions:\n\n1. Think step by step and explain your reasoning process\n2. Consider multiple perspectives before concluding\n3. Acknowledge uncertainty when appropriate\n4. Provide evidence-based conclusions\n5. Use structured analysis for complex problems\n6. Break down complex topics into understandable parts\n\nBe thorough, precise, and intellectually honest. Format your responses using markdown when appropriate.';
@@ -324,7 +397,23 @@
             basePrompt = state.settings.systemPrompt;
         }
 
-        return basePrompt + dateContext;
+        return basePrompt + dateContext + searchContext;
+    }
+
+    function showSearchIndicator(query) {
+        const indicator = document.createElement('div');
+        indicator.className = 'typing-indicator';
+        indicator.id = 'searchIndicator';
+        indicator.innerHTML = `<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>`;
+        indicator.style.maxWidth = '200px';
+
+        const searchLabel = document.createElement('div');
+        searchLabel.style.cssText = 'font-size:0.7rem;color:var(--primary);margin-top:4px;font-family:var(--font)';
+        searchLabel.textContent = `Searching: ${query}...`;
+        indicator.appendChild(searchLabel);
+
+        dom.messagesContainer.appendChild(indicator);
+        scrollToBottom();
     }
 
     // ========== DEBUG LOG ==========
@@ -359,6 +448,83 @@
         while (dom.debugContent.children.length > 10) {
             dom.debugContent.removeChild(dom.debugContent.lastChild);
         }
+    }
+
+    // ========== WEB SEARCH TOOL ==========
+    const WEB_SEARCH_TOOLS = [{
+        type: 'function',
+        function: {
+            name: 'web_search',
+            description: 'Search the web for current information about recent events, news, facts, or data. Use this when the user asks about something that happened after 2024 or when you need real-time information.',
+            parameters: {
+                type: 'object',
+                properties: {
+                    query: {
+                        type: 'string',
+                        description: 'The search query'
+                    }
+                },
+                required: ['query']
+            }
+        }
+    }];
+
+    async function performWebSearch(query) {
+        // Use DuckDuckGo HTML scraping (no API key needed)
+        try {
+            const encodedQuery = encodeURIComponent(query);
+            const response = await fetch(`https://html.duckduckgo.com/html/?q=${encodedQuery}`, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+            });
+
+            if (!response.ok) throw new Error('Search failed');
+
+            const html = await response.text();
+            const results = [];
+
+            // Parse DuckDuckGo results
+            const resultRegex = /<a[^>]*class="result__a"[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/g;
+            const snippetRegex = /<a[^>]*class="result__snippet"[^>]*>(.*?)<\/a>/g;
+
+            let match;
+            let i = 0;
+            while ((match = resultRegex.exec(html)) !== null && i < 5) {
+                const url = match[1];
+                const title = match[2].replace(/<[^>]*>/g, '').trim();
+                results.push({ title, url });
+                i++;
+            }
+
+            // Try snippet extraction
+            const snippetMatches = html.matchAll(/class="result__snippet"[^>]*>(.*?)<\/a>/g);
+            results.forEach((r, idx) => {
+                const snippets = Array.from(html.matchAll(/class="result__snippet"[^>]*>(.*?)<\/a>/g));
+                if (snippets[idx]) {
+                    r.snippet = snippets[idx][1].replace(/<[^>]*>/g, '').trim();
+                }
+            });
+
+            return results.map(r => ({
+                title: r.title,
+                url: r.url,
+                snippet: r.snippet || 'No description available.'
+            }));
+        } catch (error) {
+            // Fallback: return a message that search isn't available
+            return [{
+                title: 'Search Unavailable',
+                url: '',
+                snippet: `Could not perform web search: ${error.message}. The model will answer based on its training data.`
+            }];
+        }
+    }
+
+    function formatSearchResults(results) {
+        return results.map((r, i) =>
+            `${i + 1}. **${r.title}**\n   ${r.snippet}\n   URL: ${r.url}`
+        ).join('\n\n');
     }
 
     // ========== CHAT ==========
@@ -418,10 +584,14 @@
                 ...session.messages.map(m => ({ role: m.role, content: m.content }))
             ];
 
+            // Add tools if web search is enabled
+            const tools = state.webSearchEnabled ? WEB_SEARCH_TOOLS : undefined;
+
             const requestBody = {
                 model: currentModel,
                 messages,
-                temperature: state.reasoningMode ? 0.3 : parseFloat(state.settings.temperature)
+                temperature: state.reasoningMode ? 0.3 : parseFloat(state.settings.temperature),
+                ...(tools ? { tools, tool_choice: 'auto' } : {})
             };
 
             // Log debug info
@@ -430,14 +600,71 @@
                     url: state.settings.apiUrl.replace(/\/+$/, '') + '/chat/completions',
                     model: currentModel,
                     temperature: requestBody.temperature,
+                    tools: state.webSearchEnabled ? 'web_search enabled' : 'none',
                     systemPrompt: systemPrompt.substring(0, 200) + '...',
                     messageCount: messages.length
                 });
             }
 
-            const response = await callApi('chat/completions', requestBody);
+            let response = await callApi('chat/completions', requestBody);
+            let assistantMessage = response.choices[0].message;
 
-            const assistantContent = response.choices[0].message.content;
+            // Handle tool calls (web search)
+            if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
+                if (state.debugMode) {
+                    addDebugLog('TOOL_CALL', {
+                        tools: JSON.stringify(assistantMessage.tool_calls)
+                    });
+                }
+
+                // Add assistant's tool call to messages
+                messages.push({
+                    role: 'assistant',
+                    content: assistantMessage.content,
+                    tool_calls: assistantMessage.tool_calls
+                });
+
+                // Execute each tool call
+                for (const toolCall of assistantMessage.tool_calls) {
+                    if (toolCall.function.name === 'web_search') {
+                        const searchQuery = JSON.parse(toolCall.function.arguments).query;
+
+                        if (state.debugMode) {
+                            addDebugLog('SEARCH', { query: searchQuery });
+                        }
+
+                        // Show search indicator
+                        showSearchIndicator(searchQuery);
+
+                        const searchResults = await performWebSearch(searchQuery);
+                        const formattedResults = formatSearchResults(searchResults);
+
+                        // Add tool result to messages
+                        messages.push({
+                            role: 'tool',
+                            tool_call_id: toolCall.id,
+                            content: formattedResults
+                        });
+
+                        removeTypingIndicator();
+                    }
+                }
+
+                // Show typing indicator again for final response
+                showTypingIndicator();
+
+                // Get final response from model with search results
+                const finalRequestBody = {
+                    model: currentModel,
+                    messages,
+                    temperature: state.reasoningMode ? 0.3 : parseFloat(state.settings.temperature)
+                };
+
+                response = await callApi('chat/completions', finalRequestBody);
+                assistantMessage = response.choices[0].message;
+            }
+
+            const assistantContent = assistantMessage.content;
 
             // Log response debug
             if (state.debugMode) {
@@ -785,6 +1012,8 @@
     function removeTypingIndicator() {
         const el = document.getElementById('typingIndicator');
         if (el) el.remove();
+        const searchEl = document.getElementById('searchIndicator');
+        if (searchEl) searchEl.remove();
     }
 
     function scrollToBottom() {
