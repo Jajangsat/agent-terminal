@@ -470,49 +470,89 @@
     }];
 
     async function performWebSearch(query) {
-        // Use DuckDuckGo HTML scraping (no API key needed)
         try {
             const encodedQuery = encodeURIComponent(query);
-            const response = await fetch(`https://html.duckduckgo.com/html/?q=${encodedQuery}`, {
+            // Use AllOrigins CORS proxy to fetch DuckDuckGo results
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://html.duckduckgo.com/html/?q=${encodedQuery}`)}`;
+
+            const response = await fetch(proxyUrl, {
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    'Accept': 'application/json'
                 }
             });
 
-            if (!response.ok) throw new Error('Search failed');
+            if (!response.ok) throw new Error('Proxy request failed');
 
-            const html = await response.text();
+            const data = await response.json();
+            const html = data.contents;
+
+            if (!html) throw new Error('No content returned');
+
             const results = [];
 
-            // Parse DuckDuckGo results
+            // Extract result links and titles
             const resultRegex = /<a[^>]*class="result__a"[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/g;
-            const snippetRegex = /<a[^>]*class="result__snippet"[^>]*>(.*?)<\/a>/g;
-
             let match;
             let i = 0;
+
             while ((match = resultRegex.exec(html)) !== null && i < 5) {
-                const url = match[1];
+                let url = match[1];
+                // Clean up DuckDuckGo redirect URLs
+                if (url.startsWith('//')) url = 'https:' + url;
                 const title = match[2].replace(/<[^>]*>/g, '').trim();
-                results.push({ title, url });
+
+                if (title && url) {
+                    results.push({ title, url, snippet: '' });
+                }
                 i++;
             }
 
-            // Try snippet extraction
-            const snippetMatches = html.matchAll(/class="result__snippet"[^>]*>(.*?)<\/a>/g);
+            // Extract snippets
+            const snippetRegex = /<div[^>]*class="result__snippet"[^>]*>(.*?)<\/div>/g;
+            const snippets = [];
+            let snippetMatch;
+            while ((snippetMatch = snippetRegex.exec(html)) !== null) {
+                snippets.push(snippetMatch[1].replace(/<[^>]*>/g, '').trim());
+            }
+
             results.forEach((r, idx) => {
-                const snippets = Array.from(html.matchAll(/class="result__snippet"[^>]*>(.*?)<\/a>/g));
-                if (snippets[idx]) {
-                    r.snippet = snippets[idx][1].replace(/<[^>]*>/g, '').trim();
-                }
+                if (snippets[idx]) r.snippet = snippets[idx];
             });
 
-            return results.map(r => ({
-                title: r.title,
-                url: r.url,
-                snippet: r.snippet || 'No description available.'
-            }));
+            if (results.length === 0) {
+                throw new Error('No results found');
+            }
+
+            return results;
         } catch (error) {
-            // Fallback: return a message that search isn't available
+            // Fallback: try alternative approach with a simpler proxy
+            try {
+                const encodedQuery = encodeURIComponent(query);
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(`https://duckduckgo.com/html/?q=${encodedQuery}`)}`;
+
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error('Alternative proxy failed');
+
+                const html = await response.text();
+                const results = [];
+
+                const resultRegex = /<a[^>]*class="result__a"[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/g;
+                let match;
+                let i = 0;
+
+                while ((match = resultRegex.exec(html)) !== null && i < 5) {
+                    let url = match[1];
+                    if (url.startsWith('//')) url = 'https:' + url;
+                    const title = match[2].replace(/<[^>]*>/g, '').trim();
+                    if (title && url) results.push({ title, url, snippet: '' });
+                    i++;
+                }
+
+                if (results.length > 0) return results;
+            } catch (e2) {
+                // Both proxies failed
+            }
+
             return [{
                 title: 'Search Unavailable',
                 url: '',
