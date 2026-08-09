@@ -307,10 +307,24 @@
     }
 
     function getSystemPrompt() {
+        const today = new Date();
+        const dateStr = today.toLocaleDateString('id-ID', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        const dateContext = `\n\nCurrent date: ${dateStr}. Always reference the current date when answering time-sensitive questions.`;
+
+        let basePrompt;
         if (state.reasoningMode) {
-            return 'You are an expert AI analyst with deep reasoning capabilities. When answering questions:\n\n1. Think step by step and explain your reasoning process\n2. Consider multiple perspectives before concluding\n3. Acknowledge uncertainty when appropriate\n4. Provide evidence-based conclusions\n5. Use structured analysis for complex problems\n6. Break down complex topics into understandable parts\n\nBe thorough, precise, and intellectually honest. Format your responses using markdown when appropriate.';
+            basePrompt = 'You are an expert AI analyst with deep reasoning capabilities. When answering questions:\n\n1. Think step by step and explain your reasoning process\n2. Consider multiple perspectives before concluding\n3. Acknowledge uncertainty when appropriate\n4. Provide evidence-based conclusions\n5. Use structured analysis for complex problems\n6. Break down complex topics into understandable parts\n\nBe thorough, precise, and intellectually honest. Format your responses using markdown when appropriate.';
+        } else {
+            basePrompt = state.settings.systemPrompt;
         }
-        return state.settings.systemPrompt;
+
+        return basePrompt + dateContext;
     }
 
     // ========== DEBUG LOG ==========
