@@ -411,6 +411,7 @@
                     <label class="form-label" for="apiUrl">API Base URL</label>
                     <input type="text" id="apiUrl" class="form-input" placeholder="https://api.openai.com/v1">
                     <p class="form-hint">OpenAI, Together AI, OpenRouter, Groq — any OpenAI-compatible endpoint</p>
+                    <p class="form-hint" style="color:var(--error);display:none" id="agentRouterWarning">⚠️ AgentRouter may not support direct browser requests. If you get "unauthorized client" errors, try using a different provider or set up a server-side proxy.</p>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="apiKey">API Key</label>

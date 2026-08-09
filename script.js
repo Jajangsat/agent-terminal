@@ -116,6 +116,14 @@
             if (e.target === dom.settingsModal) closeSettings();
         });
 
+        // Show warning for agentrouter
+        dom.apiUrl.addEventListener('input', () => {
+            const warning = document.getElementById('agentRouterWarning');
+            if (warning) {
+                warning.style.display = dom.apiUrl.value.includes('agentrouter.org') ? 'block' : 'none';
+            }
+        });
+
         // App navigation
         dom.homeBtn.addEventListener('click', showLanding);
         dom.newChatBtn.addEventListener('click', createNewSession);
@@ -756,18 +764,36 @@
         const url = state.settings.apiUrl.replace(/\/+$/, '') + '/' + endpoint;
         console.log('API Request:', url);
 
+        // Detect aggregator APIs and add required headers
+        const isOpenRouter = state.settings.apiUrl.includes('openrouter.ai');
+        const isAgentRouter = state.settings.apiUrl.includes('agentrouter.org');
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + state.settings.apiKey
+        };
+
+        if (isOpenRouter || isAgentRouter) {
+            headers['HTTP-Referer'] = window.location.origin;
+            headers['X-Title'] = 'Agent Terminal';
+            headers['X-Request-Source'] = 'web';
+        }
+
         try {
             const response = await fetch(url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + state.settings.apiKey
-                },
+                headers,
                 body: JSON.stringify(body)
             });
 
             if (!response.ok) {
                 const error = await response.json().catch(() => ({}));
+                console.error('API Error:', response.status, error);
+
+                // Special handling for agentrouter unauthorized client error
+                if (error.type === 'unauthorized_client_error') {
+                    throw new Error('AgentRouter requires specific client configuration. This API may not support browser-based requests directly. Try using a server-side proxy or contact AgentRouter support (Discord: https://discord.gg/aYq5B4RW3) for browser access setup.');
+                }
+
                 throw new Error(error.error?.message || `HTTP ${response.status}: ${response.statusText}`);
             }
 
