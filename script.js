@@ -145,6 +145,10 @@
         if (dom.searchAnswerBtn) {
             dom.searchAnswerBtn.addEventListener('click', searchAndAnswer);
         }
+        dom.searchAnswerBtn2 = document.getElementById('searchAnswerBtn2');
+        if (dom.searchAnswerBtn2) {
+            dom.searchAnswerBtn2.addEventListener('click', searchAndAnswer);
+        }
 
         // Model select sync
         dom.modelSelect.addEventListener('change', () => {
@@ -178,8 +182,10 @@
             dom.searchCloseBtn.addEventListener('click', () => {
                 state.webSearchEnabled = false;
                 dom.searchPanel.style.display = 'none';
-                dom.searchToggleBtn.classList.remove('reasoning-active');
-                dom.searchToggleBtn.textContent = 'Search';
+                if (dom.searchToggleBtn) {
+                    dom.searchToggleBtn.classList.remove('reasoning-active');
+                    dom.searchToggleBtn.textContent = 'Search';
+                }
             });
         }
         if (dom.searchExecuteBtn) {
