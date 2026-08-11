@@ -1111,6 +1111,7 @@
         const wordDelay = 35;
         const animationDuration = 320;
         const startedAt = performance.now();
+        let lastFollowedIndex = -1;
 
         function followWords(now) {
             const elapsed = now - startedAt;
@@ -1118,10 +1119,15 @@
             const word = words[visibleIndex];
             const containerRect = dom.messagesContainer.getBoundingClientRect();
             const wordRect = word.getBoundingClientRect();
-            const bottomPadding = 28;
+            const wordBottom = wordRect.bottom - containerRect.top + dom.messagesContainer.scrollTop;
+            const visibleBottom = dom.messagesContainer.scrollTop + dom.messagesContainer.clientHeight - 28;
 
-            if (wordRect.bottom > containerRect.bottom - bottomPadding) {
-                dom.messagesContainer.scrollTop += wordRect.bottom - (containerRect.bottom - bottomPadding);
+            if (visibleIndex !== lastFollowedIndex && wordBottom > visibleBottom) {
+                dom.messagesContainer.scrollTop = Math.min(
+                    dom.messagesContainer.scrollHeight - dom.messagesContainer.clientHeight,
+                    wordBottom - dom.messagesContainer.clientHeight + 28
+                );
+                lastFollowedIndex = visibleIndex;
             }
 
             if (elapsed < words.length * wordDelay + animationDuration) {
