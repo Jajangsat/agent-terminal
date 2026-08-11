@@ -1046,7 +1046,7 @@
                     </div>
                     <div class="app-msg-content">${content}</div>
                     <div class="app-msg-actions">
-                        <button class="app-msg-action-btn" onclick="copyMessage(this, '${escapeAttr(msg.content)}')">Copy</button>
+                        <button class="app-msg-action-btn app-copy-message-btn" data-message-index="${index}">Copy</button>
                     </div>
                 </div>
             `;
@@ -1056,6 +1056,13 @@
         if (Number.isInteger(options.animateMessageIndex)) {
             animateAssistantMessage(options.animateMessageIndex);
         }
+        dom.messagesContainer.querySelectorAll('.app-copy-message-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const currentSession = state.sessions[state.currentSessionId];
+                const message = currentSession?.messages[Number(button.dataset.messageIndex)];
+                if (message) copyMessage(button, message.content);
+            });
+        });
         scrollToBottom();
     }
 
