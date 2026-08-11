@@ -1106,7 +1106,12 @@
 
         // Start at the beginning of the new answer, then follow the reveal downward.
         const messageBubble = message.closest('.app-msg');
-        dom.messagesContainer.scrollTop = Math.max(0, messageBubble.offsetTop - 20);
+        const containerRect = dom.messagesContainer.getBoundingClientRect();
+        const messageRect = messageBubble.getBoundingClientRect();
+        dom.messagesContainer.scrollTop = Math.max(
+            0,
+            dom.messagesContainer.scrollTop + messageRect.top - containerRect.top - 20
+        );
 
         const wordDelay = 35;
         const animationDuration = 320;
@@ -1117,15 +1122,15 @@
             const elapsed = now - startedAt;
             const visibleIndex = Math.min(words.length - 1, Math.floor(elapsed / wordDelay));
             const word = words[visibleIndex];
-            const containerRect = dom.messagesContainer.getBoundingClientRect();
+            const currentContainerRect = dom.messagesContainer.getBoundingClientRect();
             const wordRect = word.getBoundingClientRect();
-            const wordBottom = wordRect.bottom - containerRect.top + dom.messagesContainer.scrollTop;
-            const visibleBottom = dom.messagesContainer.scrollTop + dom.messagesContainer.clientHeight - 28;
+            const bottomPadding = 28;
 
-            if (visibleIndex !== lastFollowedIndex && wordBottom > visibleBottom) {
+            if (visibleIndex !== lastFollowedIndex && wordRect.bottom > currentContainerRect.bottom - bottomPadding) {
+                const distancePastBottom = wordRect.bottom - (currentContainerRect.bottom - bottomPadding);
                 dom.messagesContainer.scrollTop = Math.min(
                     dom.messagesContainer.scrollHeight - dom.messagesContainer.clientHeight,
-                    wordBottom - dom.messagesContainer.clientHeight + 28
+                    dom.messagesContainer.scrollTop + distancePastBottom
                 );
                 lastFollowedIndex = visibleIndex;
             }
