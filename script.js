@@ -1055,6 +1055,8 @@
         updateToolbarTitle();
         if (Number.isInteger(options.animateMessageIndex)) {
             animateAssistantMessage(options.animateMessageIndex);
+        } else {
+            scrollToBottom();
         }
         dom.messagesContainer.querySelectorAll('.app-copy-message-btn').forEach(button => {
             button.addEventListener('click', () => {
@@ -1063,7 +1065,6 @@
                 if (message) copyMessage(button, message.content);
             });
         });
-        scrollToBottom();
     }
 
     function animateAssistantMessage(messageIndex) {
@@ -1099,6 +1100,36 @@
             });
             textNode.parentNode.replaceChild(fragment, textNode);
         });
+
+        const words = [...message.querySelectorAll('.app-msg-word')];
+        if (words.length === 0) return;
+
+        // Start at the beginning of the new answer, then follow the reveal downward.
+        const messageBubble = message.closest('.app-msg');
+        dom.messagesContainer.scrollTop = Math.max(0, messageBubble.offsetTop - 20);
+
+        const wordDelay = 35;
+        const animationDuration = 320;
+        const startedAt = performance.now();
+
+        function followWords(now) {
+            const elapsed = now - startedAt;
+            const visibleIndex = Math.min(words.length - 1, Math.floor(elapsed / wordDelay));
+            const word = words[visibleIndex];
+            const containerRect = dom.messagesContainer.getBoundingClientRect();
+            const wordRect = word.getBoundingClientRect();
+            const bottomPadding = 28;
+
+            if (wordRect.bottom > containerRect.bottom - bottomPadding) {
+                dom.messagesContainer.scrollTop += wordRect.bottom - (containerRect.bottom - bottomPadding);
+            }
+
+            if (elapsed < words.length * wordDelay + animationDuration) {
+                requestAnimationFrame(followWords);
+            }
+        }
+
+        requestAnimationFrame(followWords);
     }
 
     window.copyMessage = function(btn, content) {
