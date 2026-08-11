@@ -1570,6 +1570,22 @@ body.app-active .app-container {
 .app-msg-content h3 { font-size: 1.05em; }
 .app-msg-content a { color: var(--amber-dim); text-decoration: underline; text-underline-offset: 2px; }
 
+/* Reveal the latest AI response one word at a time, following document order. */
+.app-msg-word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(-0.35em);
+    animation: wordReveal 0.32s ease-out forwards;
+    animation-delay: calc(var(--word-index) * 35ms);
+}
+
+@keyframes wordReveal {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 900px) {
     .hero-container {

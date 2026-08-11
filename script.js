@@ -493,7 +493,7 @@
 
         state.isLoading = false;
         updateSendButton();
-        renderMessages();
+        renderMessages({ animateMessageIndex: session.messages.length - 1 });
         saveSessions();
     }
 
@@ -762,7 +762,7 @@
         state.isLoading = false;
         updateSendButton();
         removeTypingIndicator();
-        renderMessages();
+        renderMessages({ animateMessageIndex: session.messages.length - 1 });
         saveSessions();
     }
 
@@ -1022,7 +1022,7 @@
     };
 
     // ========== UI FUNCTIONS ==========
-    function renderMessages() {
+    function renderMessages(options = {}) {
         const session = state.sessions[state.currentSessionId];
         if (!session || session.messages.length === 0) {
             dom.messagesContainer.innerHTML = '';
@@ -1033,13 +1033,13 @@
 
         if (dom.welcomeMessage) dom.welcomeMessage.style.display = 'none';
 
-        dom.messagesContainer.innerHTML = session.messages.map(msg => {
+        dom.messagesContainer.innerHTML = session.messages.map((msg, index) => {
             const isUser = msg.role === 'user';
             const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const content = isUser ? escapeHtml(msg.content) : renderMarkdown(msg.content);
 
             return `
-                <div class="app-msg app-msg-${isUser ? 'user' : 'ai'}">
+                <div class="app-msg app-msg-${isUser ? 'user' : 'ai'}" data-message-index="${index}">
                     <div class="app-msg-header">
                         <span class="app-msg-role">${isUser ? 'You' : 'AI'}</span>
                         <span class="app-msg-time">${time}</span>
@@ -1053,7 +1053,45 @@
         }).join('');
 
         updateToolbarTitle();
+        if (Number.isInteger(options.animateMessageIndex)) {
+            animateAssistantMessage(options.animateMessageIndex);
+        }
         scrollToBottom();
+    }
+
+    function animateAssistantMessage(messageIndex) {
+        const message = dom.messagesContainer.querySelector(
+            `.app-msg-ai[data-message-index="${messageIndex}"] .app-msg-content`
+        );
+        if (!message) return;
+
+        const walker = document.createTreeWalker(message, NodeFilter.SHOW_TEXT);
+        const textNodes = [];
+        let node;
+
+        while ((node = walker.nextNode())) {
+            if (node.parentElement.closest('pre')) continue;
+            if (node.nodeValue.trim()) textNodes.push(node);
+        }
+
+        let wordIndex = 0;
+        textNodes.forEach(textNode => {
+            const fragment = document.createDocumentFragment();
+            textNode.nodeValue.split(/(\s+)/).forEach(part => {
+                if (!part) return;
+                if (/\s+/.test(part)) {
+                    fragment.appendChild(document.createTextNode(part));
+                    return;
+                }
+
+                const word = document.createElement('span');
+                word.className = 'app-msg-word';
+                word.textContent = part;
+                word.style.setProperty('--word-index', wordIndex++);
+                fragment.appendChild(word);
+            });
+            textNode.parentNode.replaceChild(fragment, textNode);
+        });
     }
 
     window.copyMessage = function(btn, content) {
